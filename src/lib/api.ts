@@ -133,7 +133,7 @@ export async function uploadAttachment(
   const safeName = file.name.replace(/[^\w.-]+/g, "_");
   const path = `${userId}/${requestId}/${crypto.randomUUID()}-${safeName}`;
   const { error: uploadError } = await supabase.storage
-    .from("payment-attachments")
+    .from("kruispad-attachments")
     .upload(path, file, { contentType: file.type, upsert: false });
   if (uploadError) throw uploadError;
 

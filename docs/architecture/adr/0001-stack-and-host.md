@@ -1,6 +1,7 @@
 # ADR-0001 — Stack and host (supersedes spec §2.1)
 
 **Status:** Accepted · **Date:** 2026-10-27 · **Deciders:** Eswan Holl (owner)  
+**Amended by:** [ADR-0003](0003-email-action-links-and-shared-schema.md) (shared Supabase + `kruispad` schema)  
 **Linear:** [GST-459](https://linear.app/gekkotech/issue/GST-459/kruispad-payment-request-workflow-app-v1)
 
 ## Context
@@ -11,14 +12,14 @@ Spec v1.3 §2.1 proposed Manus Web Dev (`web-db-user`): React/Vite/TS/Tailwind, 
 
 1. **Host:** Vercel (product path: PR → `main` → documented Vercel project).
 2. **App:** React + Vite + TypeScript + Tailwind.
-3. **Backend data plane:** Supabase — Postgres, Auth, Storage (private bucket for PDF/JPG/PNG).
-4. **Server enforcement:** Postgres RPCs for workflow transitions + `audit_events`; Vercel `/api/*` for email notify.
-5. **Secrets:** Bitwarden Secrets Manager at runtime via `bws` ([ADR-0017](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0017-bitwarden-secrets-manager-runtime.md)); names [ADR-0006](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0006-secret-naming-convention.md) with scope `__PROJ_KRUISPAD`. Use the **single existing GekkoStack BWS project** — do not create a new per-product BWS project.
-6. Spec §2.1 Manus OAuth / MySQL / Manus host are **superseded** for implementation. Workflow behaviour in §§2.2–2.7 remains authoritative.
+3. **Backend data plane:** **Existing shared Supabase project** (Postgres, Auth, Storage). Kruispad objects live in schema **`kruispad`** — not a new Supabase project ([ADR-0003](0003-email-action-links-and-shared-schema.md)).
+4. **Server enforcement:** Postgres RPCs in `kruispad` for workflow transitions + `audit_events`; Vercel `/api/*` for notify + email-action execution.
+5. **Secrets:** Bitwarden Secrets Manager at runtime via `bws` ([ADR-0017](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0017-bitwarden-secrets-manager-runtime.md)); names [ADR-0006](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0006-secret-naming-convention.md). Use the **single existing GekkoStack BWS project**. Reuse shared Supabase secret names; Kruispad-only rows use `__PROJ_KRUISPAD`.
+6. Spec §2.1 Manus OAuth / MySQL / Manus host are **superseded**. Workflow behaviour in §§2.2–2.7 remains authoritative.
 
 ## Consequences
 
-- (+) Matches GekkoFlow skills and hub deep-link story.
-- (+) RLS + Auth + Storage in one project.
-- (−) Owner must create Supabase + Vercel projects and Bitwarden secret rows (names in SECRETS_INVENTORY).
-- (−) Separate Supabase Auth from GekkoFlow (no cross-origin session) unless a later ADR adds SSO.
+- (+) Matches GekkoFlow skills and hub deep-link story; avoids extra Supabase cost.
+- (+) RLS + Auth + Storage shared infrastructure with schema isolation.
+- (−) Owner exposes `kruispad` on PostgREST, creates Vercel project, saves BWS rows (SECRETS_INVENTORY).
+- (−) Auth users are shared-project Auth users; roles still live in `kruispad.profiles`.

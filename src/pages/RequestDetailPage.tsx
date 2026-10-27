@@ -62,7 +62,7 @@ export function RequestDetailPage() {
   }
 
   async function openFile(path: string) {
-    const { data, error } = await supabase.storage.from("payment-attachments").createSignedUrl(path, 120);
+    const { data, error } = await supabase.storage.from("kruispad-attachments").createSignedUrl(path, 120);
     if (error) {
       toast.error(error.message);
       return;

@@ -4,6 +4,7 @@ import { AuthProvider } from "@/auth/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { RequireAuth } from "@/components/RequireAuth";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { ActionPage } from "@/pages/ActionPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { MyRequestsPage } from "@/pages/MyRequestsPage";
 import {
@@ -23,6 +24,7 @@ export default function App() {
         <Toaster richColors position="top-right" />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/action/:token" element={<ActionPage />} />
           <Route
             element={
               <RequireAuth>

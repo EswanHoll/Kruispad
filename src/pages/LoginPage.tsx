@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/useAuth";
+import { supabase } from "@/lib/supabase";
 
 export function LoginPage() {
-  const { signIn, session, configured } = useAuth();
-  const navigate = useNavigate();
+  const { session, configured } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
 
   if (session) return <Navigate to={from} replace />;
@@ -18,11 +18,19 @@ export function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      await signIn(email.trim(), password);
-      toast.success("Signed in");
-      navigate(from);
+      const redirectTo = `${window.location.origin}${from === "/login" ? "/" : from}`;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: true,
+        },
+      });
+      if (error) throw error;
+      setSent(true);
+      toast.success("Magic link sent — check your email");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign-in failed");
+      toast.error(err instanceof Error ? err.message : "Could not send magic link");
     } finally {
       setBusy(false);
     }
@@ -35,36 +43,42 @@ export function LoginPage() {
         <p style={{ marginTop: 0, color: "var(--kp-teal)", fontWeight: 600 }}>
           Payment Request Approval Workflow
         </p>
+        <p style={{ color: "var(--kp-teal)" }}>
+          Initiators sign in with a <strong>magic link</strong> — no password. Approvers and Finance
+          usually act from email action buttons without signing in.
+        </p>
         {!configured && (
           <p style={{ color: "var(--kp-danger)", fontWeight: 600 }}>
-            Frontend Supabase env vars are missing. Owner must sync from Bitwarden.
+            Frontend Supabase env vars are missing. Sync from Bitwarden (`SUPABASE_*__SHARED`).
           </p>
         )}
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button className="btn btn-primary" type="submit" disabled={busy || !configured} style={{ width: "100%" }}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
+        {sent ? (
+          <p className="panel" style={{ margin: 0 }}>
+            Link sent to <strong>{email}</strong>. Open it on this device to continue.
+          </p>
+        ) : (
+          <>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={busy || !configured}
+              style={{ width: "100%" }}
+            >
+              {busy ? "Sending…" : "Email me a magic link"}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );

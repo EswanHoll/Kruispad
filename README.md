@@ -12,7 +12,9 @@ Digitises expense submission, **parallel dual approval** (Fred Louw + Anton Prin
 
 ## Stack
 
-React + Vite + TypeScript + Tailwind on **Vercel**; **Supabase** (Auth, Postgres, Storage). Spec §2.1 Manus/MySQL stack is superseded by [ADR-0001](docs/architecture/adr/0001-stack-and-host.md).
+React + Vite + TypeScript + Tailwind on **Vercel**; **existing shared Supabase** with schema **`kruispad`** (Auth, Postgres, Storage) — no new Supabase project ([ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md)). Spec §2.1 Manus/MySQL stack is superseded by [ADR-0001](docs/architecture/adr/0001-stack-and-host.md).
+
+Approvers/Finance/Admin act via **email action links** (single-use tokens → `/action/:token`). Initiators use **magic-link** sign-in (no password).
 
 ## Local setup
 
@@ -51,8 +53,8 @@ Deep links and `?from=gekkoflow` return behaviour: [ARCHITECTURE.md § GekkoFlow
 
 ## Owner steps (not done by agents)
 
-1. Create Supabase project for Kruispad; save URL/keys under `__PROJ_KRUISPAD` in the **existing** GekkoStack BWS project.
-2. Create Vercel project linked to this repo; sync `VITE_*` from BWS.
-3. Add SendGrid from-address + API key names in BWS.
-4. Invite real users in Supabase Auth; Admin assigns roles in `/admin/users` (do not seed real emails in git).
+1. On the **existing shared Supabase** project: expose PostgREST schema `kruispad`, apply `supabase/migrations`, ensure Auth email magic links are enabled and Site URL / redirect allow the Vercel host.
+2. Reuse shared BWS Supabase names (`SUPABASE_*__SHARED`); add Kruispad SendGrid + `APP_BASE_URL__PROJ_KRUISPAD` in the **existing** GekkoStack BWS project (see [SECRETS_INVENTORY](docs/architecture/SECRETS_INVENTORY.md)).
+3. Create Vercel project linked to this repo; sync `VITE_*` from `SUPABASE_*__SHARED`.
+4. Invite real users (magic link); Admin assigns roles in `/admin/users` (do not seed real emails in git).
 5. Set DNS only when ready for a custom domain (optional).

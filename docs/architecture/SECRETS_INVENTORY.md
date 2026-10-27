@@ -6,41 +6,47 @@
 
 > **Names and scopes only. Never paste values into this file, PRs, or agent chat.**  
 > Runtime store: **Bitwarden Secrets Manager** ([ADR-0017](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0017-bitwarden-secrets-manager-runtime.md)). Naming: [ADR-0006](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0006-secret-naming-convention.md). **Never GitHub secrets.**  
-> **BWS project:** use the **existing GekkoStack Secrets Manager project** (do **not** create a new per-product BWS project). Grant the deploy/CI machine account access to that project.
+> **BWS project:** existing GekkoStack Secrets Manager project only.  
+> **Supabase:** reuse the **existing shared** project — schema `kruispad` ([ADR-0003](adr/0003-email-action-links-and-shared-schema.md)). Do **not** create a new Supabase project.
 
 ## Bootstrap
 
-| Name | Scope | BWS project | Notes |
-|------|-------|-------------|-------|
-| `BWS_ACCESS_TOKEN` | machine account | — | Only host bootstrap credential; hydrates ADR-0006 names via `bws` |
+| Name | Scope | Notes |
+|------|-------|-------|
+| `BWS_ACCESS_TOKEN` | machine account | Only host bootstrap credential |
 
-## Kruispad project secrets (`__PROJ_KRUISPAD`)
+## Shared Supabase (reuse — do not duplicate)
 
 | # | Secret name (exact) | Scope | Required for | Notes |
 |---|---------------------|-------|--------------|-------|
-| 1 | `SUPABASE_URL__PROJ_KRUISPAD` | PROJ | Build / runtime | Project URL (public) |
-| 2 | `SUPABASE_ANON_KEY__PROJ_KRUISPAD` | PROJ | Browser + CI build | Anon key (RLS-enforced) |
-| 3 | `SUPABASE_SERVICE_ROLE_KEY__PROJ_KRUISPAD` | PROJ | Server / migrations / notify | **Server only** — never expose to Vite |
-| 4 | `SUPABASE_PROJECT_REF__PROJ_KRUISPAD` | PROJ | CLI `db push` | Project ref |
-| 5 | `SUPABASE_DB_PASSWORD__PROJ_KRUISPAD` | PROJ | Migrations | DB password |
-| 6 | `SENDGRID_API_KEY__PROJ_KRUISPAD` | PROJ | Email notify | Prefer project key; may temporarily alias org SendGrid if operator chooses |
+| 1 | `SUPABASE_URL__SHARED` | SHARED | Build / runtime | Existing project URL |
+| 2 | `SUPABASE_ANON_KEY__SHARED` | SHARED | Browser | Anon key (RLS) |
+| 3 | `SUPABASE_SERVICE_ROLE_KEY__SHARED` | SHARED | Server / migrations / notify / action | **Server only** |
+| 4 | `SUPABASE_PROJECT_REF__SHARED` | SHARED | CLI | Existing project ref |
+| 5 | `SUPABASE_DB_PASSWORD__SHARED` | SHARED | Migrations | Existing DB password |
+
+Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard → Settings → API → Exposed schemas).
+
+## Kruispad-only (`__PROJ_KRUISPAD`)
+
+| # | Secret name (exact) | Scope | Required for | Notes |
+|---|---------------------|-------|--------------|-------|
+| 6 | `SENDGRID_API_KEY__PROJ_KRUISPAD` | PROJ | Email notify | Or operator-approved alias of org SendGrid |
 | 7 | `SENDGRID_FROM__PROJ_KRUISPAD` | PROJ | Email notify | Verified from-address |
-| 8 | `APP_BASE_URL__PROJ_KRUISPAD` | PROJ | Email deep links | e.g. production Vercel URL once known |
+| 8 | `APP_BASE_URL__PROJ_KRUISPAD` | PROJ | Email + magic-link redirects | Production Vercel URL |
 | 9 | `VERCEL_PROJECT_ID__PROJ_KRUISPAD` | PROJ | Deploy scripts | After Vercel project exists |
-| 10 | `VITE_SUPABASE_URL` | local/Vercel env sync | Frontend build | Synced **from** `SUPABASE_URL__PROJ_KRUISPAD` by deploy/sync script — not a second store of truth |
-| 11 | `VITE_SUPABASE_ANON_KEY` | local/Vercel env sync | Frontend build | Synced **from** `SUPABASE_ANON_KEY__PROJ_KRUISPAD` |
+| 10 | `VITE_SUPABASE_URL` | host sync | Frontend | Synced from `SUPABASE_URL__SHARED` |
+| 11 | `VITE_SUPABASE_ANON_KEY` | host sync | Frontend | Synced from `SUPABASE_ANON_KEY__SHARED` |
 
-Org deploy tokens already in GekkoStack catalog (reuse; do not duplicate): `VERCEL_TOKEN__SHARED` / successors, `BWS_ACCESS_TOKEN`.
-
-## Presence checklist (agent, after operator saves)
+## Presence checklist
 
 | Secret name | Verdict (`SET` / `MISSING`) |
 |-------------|----------------------------|
-| `SUPABASE_URL__PROJ_KRUISPAD` | |
-| `SUPABASE_ANON_KEY__PROJ_KRUISPAD` | |
-| `SUPABASE_SERVICE_ROLE_KEY__PROJ_KRUISPAD` | |
-| `SUPABASE_PROJECT_REF__PROJ_KRUISPAD` | |
-| `SUPABASE_DB_PASSWORD__PROJ_KRUISPAD` | |
+| `SUPABASE_URL__SHARED` | |
+| `SUPABASE_ANON_KEY__SHARED` | |
+| `SUPABASE_SERVICE_ROLE_KEY__SHARED` | |
+| `SUPABASE_PROJECT_REF__SHARED` | |
+| `SUPABASE_DB_PASSWORD__SHARED` | |
 | `SENDGRID_API_KEY__PROJ_KRUISPAD` | |
 | `SENDGRID_FROM__PROJ_KRUISPAD` | |
 | `APP_BASE_URL__PROJ_KRUISPAD` | |
@@ -50,6 +56,7 @@ Org deploy tokens already in GekkoStack catalog (reuse; do not duplicate): `VERC
 
 | When | Who | Note |
 |------|-----|------|
-| 2026-10-27 | Cursor agent | Inventory drafted — READY_FOR_OPERATOR |
-| | | Operator creates Supabase + Vercel projects; saves BWS rows |
+| 2026-10-27 | Cursor agent | Inventory drafted |
+| 2026-10-27 | Cursor agent | Cost decision: shared Supabase + `kruispad` schema; drop per-product Supabase secret names |
+| | | Operator exposes schema + saves SendGrid/app URL rows |
 | | | Presence PASS — production deploy unblocked |

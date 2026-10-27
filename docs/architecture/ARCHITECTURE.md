@@ -20,12 +20,13 @@ Digitise Kruispad expense submission, **parallel dual approval** (Fred Louw + An
 |-------|--------|-------|
 | Host | **Vercel** | Ship via PR → `main` → Vercel project (owner creates project) |
 | Frontend | React 19 + Vite + TypeScript + Tailwind | Mirrors [GekkoFlow](https://github.com/EswanHoll/GekkoFlow) UI stack |
-| Auth / DB / Storage | **Supabase** (Postgres + Auth + Storage) | Dedicated Kruispad Supabase project (owner creates) |
-| State machine | Postgres RPCs (`SECURITY DEFINER`) + `audit_events` | Concurrent dual approval under row lock |
-| Email | SendGrid via Vercel `/api/notify` | Secret from Bitwarden at runtime |
-| Secrets | Bitwarden Secrets Manager (`bws`) | **Existing GekkoStack BWS project only** — names `__PROJ_KRUISPAD` |
+| Auth / DB / Storage | **Existing shared Supabase** | Schema **`kruispad`** only — no new Supabase project ([ADR-0003](adr/0003-email-action-links-and-shared-schema.md)) |
+| State machine | `kruispad` RPCs (`SECURITY DEFINER`) + `audit_events` | Concurrent dual approval under row lock |
+| Email actions | SendGrid + `/action/:token` pages | Signed single-use tokens; no HTML forms in email |
+| Auth UX | Magic link for initiators | Approvers/finance/admin act via email links |
+| Secrets | Bitwarden (`bws`) | Shared Supabase names + `__PROJ_KRUISPAD` for SendGrid/app URL |
 
-Decision record: [ADR-0001](adr/0001-stack-and-host.md). Parallel approval: [ADR-0002](adr/0002-parallel-approval-state-machine.md).
+Decision records: [ADR-0001](adr/0001-stack-and-host.md), [ADR-0002](adr/0002-parallel-approval-state-machine.md), [ADR-0003](adr/0003-email-action-links-and-shared-schema.md).
 
 ## Context (C4 L1)
 
@@ -88,9 +89,30 @@ GekkoFlow may present or link to this app without owning its data:
 
 Do not couple Kruispad schema into GekkoFlow-DB. Hub is presentation/link only until a later ADR says otherwise.
 
+## Email action flow
+
+```mermaid
+sequenceDiagram
+  participant App as Vercel app
+  participant API as /api/notify
+  participant Mail as SendGrid
+  participant User as Approver/Finance
+  participant Act as /action/:token
+  participant DB as kruispad RPCs
+
+  App->>DB: transition (session or prior email)
+  App->>API: POST notify
+  API->>DB: mint_action_token (hash stored)
+  API->>Mail: summary + attachment links + Approve/Decline URLs
+  User->>Act: open link (no login)
+  Act->>DB: peek_action_token / execute_email_action
+  Note over DB: same apply_* helpers; audit channel=email_link
+```
+
 ## Constraints
 
 - Secrets: names only in git; values only in Bitwarden ([SECRETS_INVENTORY.md](SECRETS_INVENTORY.md)).
-- Attachments: private Supabase Storage bucket `payment-attachments` (PDF/JPG/PNG).
+- Attachments: private Storage bucket `kruispad-attachments` (PDF/JPG/PNG).
+- PostgREST must expose schema `kruispad` on the shared project.
 - CI: lint, typecheck, test — no secrets in GitHub Actions.
-- Deploy: merge to `main` → Vercel; apply Supabase migrations with CLI using BWS-hydrated credentials (owner/operator).
+- Deploy: merge to `main` → Vercel; apply migrations to shared Supabase with BWS-hydrated credentials.
