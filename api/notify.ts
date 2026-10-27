@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 import {
   actionButtonLabel,
   buildActionUrl,
@@ -293,31 +293,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const sendgridKey = env("SENDGRID_API_KEY__PROJ_KRUISPAD", "SENDGRID_API_KEY");
-  const from = env("SENDGRID_FROM__PROJ_KRUISPAD", "SENDGRID_FROM");
+  const resendKey = env("RESEND_API_KEY__PROJ_KRUISPAD", "RESEND_API_KEY");
+  const from = env("RESEND_FROM__PROJ_KRUISPAD", "RESEND_FROM");
 
-  if (!sendgridKey || !from) {
+  if (!resendKey || !from) {
     res.status(202).json({
       ok: true,
       emailed: 0,
       prepared: messages.length,
-      skipped: "sendgrid_not_configured",
+      skipped: "resend_not_configured",
     });
     return;
   }
 
-  sgMail.setApiKey(sendgridKey);
+  const resend = new Resend(resendKey);
   let emailed = 0;
   for (const msg of messages) {
     const recipients = [...new Set(msg.to.filter(Boolean))];
     if (recipients.length === 0) continue;
-    await sgMail.send({
-      to: recipients,
+    const { error } = await resend.emails.send({
       from,
+      to: recipients,
       subject: msg.subject,
       text: msg.text,
       html: msg.html,
     });
+    if (error) {
+      res.status(502).json({ error: "resend_send_failed", detail: error.message });
+      return;
+    }
     emailed += recipients.length;
   }
 

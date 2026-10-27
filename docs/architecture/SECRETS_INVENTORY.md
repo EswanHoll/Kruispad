@@ -31,8 +31,8 @@ Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard â†
 
 | # | Secret name (exact) | Scope | Required for | Notes |
 |---|---------------------|-------|--------------|-------|
-| 6 | `SENDGRID_API_KEY__PROJ_KRUISPAD` | PROJ | Email notify | Or operator-approved alias of org SendGrid |
-| 7 | `SENDGRID_FROM__PROJ_KRUISPAD` | PROJ | Email notify | Verified from-address |
+| 6 | `RESEND_API_KEY__PROJ_KRUISPAD` | PROJ | Email notify | Resend free tier (~3,000/mo); replaces SendGrid |
+| 7 | `RESEND_FROM__PROJ_KRUISPAD` | PROJ | Email notify | Verified from-address in Resend |
 | 8 | `APP_BASE_URL__PROJ_KRUISPAD` | PROJ | Email + magic-link redirects | Production Vercel URL |
 | 9 | `VERCEL_PROJECT_ID__PROJ_KRUISPAD` | PROJ | Deploy scripts | After Vercel project exists |
 | 10 | `VITE_SUPABASE_URL` | host sync | Frontend | Synced from `SUPABASE_URL__SHARED` |
@@ -47,8 +47,8 @@ Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard â†
 | `SUPABASE_SERVICE_ROLE_KEY__SHARED` | |
 | `SUPABASE_PROJECT_REF__SHARED` | |
 | `SUPABASE_DB_PASSWORD__SHARED` | |
-| `SENDGRID_API_KEY__PROJ_KRUISPAD` | |
-| `SENDGRID_FROM__PROJ_KRUISPAD` | |
+| `RESEND_API_KEY__PROJ_KRUISPAD` | |
+| `RESEND_FROM__PROJ_KRUISPAD` | |
 | `APP_BASE_URL__PROJ_KRUISPAD` | |
 | `VERCEL_PROJECT_ID__PROJ_KRUISPAD` | |
 
@@ -57,6 +57,7 @@ Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard â†
 | When | Who | Note |
 |------|-----|------|
 | 2026-10-27 | Cursor agent | Inventory drafted |
-| 2026-10-27 | Cursor agent | Cost decision: shared Supabase + `kruispad` schema; drop per-product Supabase secret names |
-| | | Operator exposes schema + saves SendGrid/app URL rows |
+| 2026-10-27 | Cursor agent | Cost decision: shared Supabase + `kruispad` schema |
+| 2026-10-27 | Cursor agent | Email provider: **Resend** (SendGrid free tier gone) |
+| | | Operator exposes schema + saves Resend/app URL rows |
 | | | Presence PASS â€” production deploy unblocked |

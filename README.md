@@ -54,7 +54,7 @@ Deep links and `?from=gekkoflow` return behaviour: [ARCHITECTURE.md § GekkoFlow
 ## Owner steps (not done by agents)
 
 1. On the **existing shared Supabase** project: expose PostgREST schema `kruispad`, apply `supabase/migrations`, ensure Auth email magic links are enabled and Site URL / redirect allow the Vercel host.
-2. Reuse shared BWS Supabase names (`SUPABASE_*__SHARED`); add Kruispad SendGrid + `APP_BASE_URL__PROJ_KRUISPAD` in the **existing** GekkoStack BWS project (see [SECRETS_INVENTORY](docs/architecture/SECRETS_INVENTORY.md)).
+2. Reuse shared BWS Supabase names (`SUPABASE_*__SHARED`); add `RESEND_API_KEY__PROJ_KRUISPAD`, `RESEND_FROM__PROJ_KRUISPAD`, and `APP_BASE_URL__PROJ_KRUISPAD` in the **existing** GekkoStack BWS project (see [SECRETS_INVENTORY](docs/architecture/SECRETS_INVENTORY.md)).
 3. Create Vercel project linked to this repo; sync `VITE_*` from `SUPABASE_*__SHARED`.
 4. Invite real users (magic link); Admin assigns roles in `/admin/users` (do not seed real emails in git).
 5. Set DNS only when ready for a custom domain (optional).

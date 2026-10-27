@@ -22,9 +22,9 @@ Digitise Kruispad expense submission, **parallel dual approval** (Fred Louw + An
 | Frontend | React 19 + Vite + TypeScript + Tailwind | Mirrors [GekkoFlow](https://github.com/EswanHoll/GekkoFlow) UI stack |
 | Auth / DB / Storage | **Existing shared Supabase** | Schema **`kruispad`** only — no new Supabase project ([ADR-0003](adr/0003-email-action-links-and-shared-schema.md)) |
 | State machine | `kruispad` RPCs (`SECURITY DEFINER`) + `audit_events` | Concurrent dual approval under row lock |
-| Email actions | SendGrid + `/action/:token` pages | Signed single-use tokens; no HTML forms in email |
+| Email actions | Resend + `/action/:token` pages | Free tier ~3k/mo; single-use tokens; no HTML forms in email |
 | Auth UX | Magic link for initiators | Approvers/finance/admin act via email links |
-| Secrets | Bitwarden (`bws`) | Shared Supabase names + `__PROJ_KRUISPAD` for SendGrid/app URL |
+| Secrets | Bitwarden (`bws`) | Shared Supabase names + `__PROJ_KRUISPAD` for Resend/app URL |
 
 Decision records: [ADR-0001](adr/0001-stack-and-host.md), [ADR-0002](adr/0002-parallel-approval-state-machine.md), [ADR-0003](adr/0003-email-action-links-and-shared-schema.md).
 
@@ -40,7 +40,7 @@ C4Context
     Person(admin, "Elsje / Admin", "Print queue + user admin")
     System(app, "Kruispad Workflow", "Vercel SPA + API routes")
     System_Ext(supabase, "Supabase", "Auth, Postgres, private Storage")
-    System_Ext(sendgrid, "SendGrid", "Transactional email")
+    System_Ext(resend, "Resend", "Transactional email (free tier)")
     System_Ext(gekkoflow, "GekkoFlow", "Optional hub — deep links into this app")
     Rel(initiator, app, "Uses")
     Rel(fred, app, "Approves / declines")
@@ -48,7 +48,7 @@ C4Context
     Rel(finance, app, "Pays / declines")
     Rel(admin, app, "Prints / manages")
     Rel(app, supabase, "Auth, RLS data, files")
-    Rel(app, sendgrid, "Notifications §2.7")
+    Rel(app, resend, "Notifications §2.7")
     Rel(gekkoflow, app, "Hub link / return URL")
 ```
 
@@ -59,7 +59,7 @@ flowchart LR
   Browser["Browser SPA\nReact + Vite"] --> Vercel["Vercel\nstatic + /api/*"]
   Vercel --> SB[(Supabase\nAuth + Postgres + Storage)]
   Vercel -->|"bws at runtime"| BWS["Bitwarden SM\nGekkoStack project"]
-  Vercel --> SG[SendGrid]
+  Vercel --> RS[Resend]
   GekkoFlow["GekkoFlow hub"] -.->|"deep link"| Browser
 ```
 
@@ -95,7 +95,7 @@ Do not couple Kruispad schema into GekkoFlow-DB. Hub is presentation/link only u
 sequenceDiagram
   participant App as Vercel app
   participant API as /api/notify
-  participant Mail as SendGrid
+  participant Mail as Resend
   participant User as Approver/Finance
   participant Act as /action/:token
   participant DB as kruispad RPCs

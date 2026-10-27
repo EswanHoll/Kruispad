@@ -57,7 +57,7 @@ Tracking issue for v1: [GST-459](https://linear.app/gekkotech/issue/GST-459/krui
 - **Spec (source of truth for workflow behaviour):** [`WorkflowApp/Payment_Request_Approval_Workflow_Spec.md`](WorkflowApp/Payment_Request_Approval_Workflow_Spec.md) v1.3; design index: [`docs/designs/`](docs/designs/).
 - **Stack / host (overrides spec §2.1):** React + Vite + TypeScript + Tailwind on **Vercel**; **shared Supabase** with schema **`kruispad`** (no new Supabase project). See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md), [ADR-0001](docs/architecture/adr/0001-stack-and-host.md), [ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md).
 - **Auth UX:** Magic-link for initiators; email action links (single-use tokens) for approvers/finance/admin — no HTML forms in email.
-- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED`; Kruispad-only SendGrid/app URL under `__PROJ_KRUISPAD`. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
+- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED`; Kruispad-only Resend/app URL under `__PROJ_KRUISPAD`. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
 - **Hub:** Keep auth and deep links compatible with a [GekkoFlow](https://gekkoflow.com) hub; see architecture § GekkoFlow linking.
 
 ## Documentation

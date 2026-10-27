@@ -18,7 +18,7 @@ Users (especially Fred, Anton, Finance, Admin) should rarely need a password ses
 3. **No-login page:** Shows request summary + attachment signed links. Approve / Mark Paid / Mark Printed confirm in one click. Decline collects a reason, then submits.
 4. **Same RPCs:** `kruispad.execute_email_action` validates the token then calls the same `apply_*` transition helpers used by session wrappers; audit `payload.channel = 'email_link'`.
 5. **Initiators:** Magic-link sign-in (Supabase Auth OTP / email link) — no password required to submit.
-6. **Secrets:** Reuse shared Supabase catalog names (`SUPABASE_*__SHARED`); keep Kruispad-only SendGrid/app URL under `__PROJ_KRUISPAD`. See SECRETS_INVENTORY.
+6. **Secrets:** Reuse shared Supabase catalog names (`SUPABASE_*__SHARED`); keep Kruispad-only Resend/app URL under `__PROJ_KRUISPAD` (`RESEND_API_KEY__PROJ_KRUISPAD`, `RESEND_FROM__PROJ_KRUISPAD`). See SECRETS_INVENTORY. SendGrid is not used (no free tier).
 
 ## Consequences
 
