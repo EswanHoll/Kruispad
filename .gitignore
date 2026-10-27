@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+.env
+.env.*
+!.env.example
+.vercel
+coverage
+*.log
+supabase/.branches
+supabase/.temp
+.pnpm-store
