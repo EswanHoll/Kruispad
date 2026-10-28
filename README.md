@@ -14,7 +14,7 @@ Digitises expense submission, **parallel dual approval** (Fred Louw + Anton Prin
 
 React + Vite + TypeScript + Tailwind, **hosted inside the existing GekkoFlow Vercel project** at `/kruispad/` (APIs `/api/kruispad/*`). Data: **existing shared Supabase** schema **`kruispad`** — no new Vercel or Supabase project ([ADR-0001](docs/architecture/adr/0001-stack-and-host.md), [ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md)). Spec §2.1 Manus/MySQL stack is superseded.
 
-Approvers/Finance/Admin act via **email action links** (single-use tokens → `/kruispad/action/:token`). Initiators use **magic-link** sign-in (no password).
+Approvers/Finance/Admin act via **email action links** (single-use tokens → `/kruispad/action/:token`). Initiators use **invite-only magic-link** sign-in (`shouldCreateUser: false`). Email via **existing SendGrid** (`SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL`).
 
 ## Local setup
 
@@ -55,7 +55,7 @@ Mount contract: [docs/architecture/GEKKOFLOW_HOSTING.md](docs/architecture/GEKKO
 ## Owner steps (not done by agents)
 
 1. On the **existing shared Supabase** project: expose PostgREST schema `kruispad`, apply `supabase/migrations`, ensure Auth email magic links are enabled and Site URL / redirect allow `https://gekkoflow.com/kruispad`.
-2. Reuse shared BWS Supabase names (`SUPABASE_*__SHARED`); add `RESEND_API_KEY__PROJ_KRUISPAD`, `RESEND_FROM__PROJ_KRUISPAD`, and `APP_BASE_URL__PROJ_KRUISPAD` (= `https://gekkoflow.com/kruispad`) in the **existing** GekkoStack BWS project; sync into the **GekkoFlow** Vercel env (see [SECRETS_INVENTORY](docs/architecture/SECRETS_INVENTORY.md)).
-3. Merge GekkoFlow mount PR; run `prepare:gekkoflow-mount` and set `KRUISPAD_MOUNT` on the GekkoFlow build (or sibling checkout).
-4. Invite real users (magic link); Admin assigns roles in `/kruispad/admin/users` (do not seed real emails in git).
+2. Reuse shared BWS Supabase names (`SUPABASE_*__SHARED`) and existing SendGrid (`SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL` — prefer verified `noreply@gekkoflow.com`); add `APP_BASE_URL__PROJ_KRUISPAD` and `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD`; sync into the **GekkoFlow** Vercel env (see [SECRETS_INVENTORY](docs/architecture/SECRETS_INVENTORY.md)).
+3. Ensure GekkoFlow `build:vercel` fetches/builds the Kruispad mount (no separate Vercel project).
+4. Admin records invites in `/kruispad/admin/users`; operator provisions Auth users; users magic-link in (do not seed real emails in git).
 5. Do **not** create a separate Vercel or Supabase project for Kruispad.

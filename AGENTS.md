@@ -57,7 +57,7 @@ Tracking issue for v1: [GST-459](https://linear.app/gekkotech/issue/GST-459/krui
 - **Spec (source of truth for workflow behaviour):** [`WorkflowApp/Payment_Request_Approval_Workflow_Spec.md`](WorkflowApp/Payment_Request_Approval_Workflow_Spec.md) v1.3; design index: [`docs/designs/`](docs/designs/).
 - **Stack / host (overrides spec §2.1):** React + Vite + TypeScript + Tailwind **mounted on the existing GekkoFlow Vercel project** at `/kruispad/` (APIs `/api/kruispad/*`); **shared Supabase** schema **`kruispad`**. Do **not** create a Kruispad Vercel or Supabase project. See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md), [ADR-0001](docs/architecture/adr/0001-stack-and-host.md), [GEKKOFLOW_HOSTING.md](docs/architecture/GEKKOFLOW_HOSTING.md), [ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md).
 - **Auth UX:** Magic-link for initiators; email action links (single-use tokens) for approvers/finance/admin — no HTML forms in email.
-- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED`; keep `RESEND_*__PROJ_KRUISPAD` and `APP_BASE_URL__PROJ_KRUISPAD`. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
+- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED` and existing SendGrid names (`SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`); keep `APP_BASE_URL__PROJ_KRUISPAD` + notify secret. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
 - **Hub:** GekkoFlow hosts and links this app (Finance → `/kruispad/`); see architecture § GekkoFlow linking.
 
 ## Documentation

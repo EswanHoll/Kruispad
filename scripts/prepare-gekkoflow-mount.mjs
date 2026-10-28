@@ -3,8 +3,10 @@
  * Build Kruispad artifacts for mounting into the GekkoFlow Vercel project.
  * Output: mount/public/kruispad/** and mount/api/kruispad/{notify,action}.js
  *
+ * Bundles API handlers with dependencies (SendGrid, supabase-js) so the host
+ * does not need matching versions at runtime.
+ *
  * Usage: pnpm run prepare:gekkoflow-mount
- * Host: set KRUISPAD_MOUNT to this mount/ path (or copy into GekkoFlow).
  */
 import * as esbuild from "esbuild";
 import { cpSync, mkdirSync, rmSync, existsSync } from "node:fs";
@@ -21,10 +23,25 @@ rmSync(mountRoot, { recursive: true, force: true });
 mkdirSync(publicOut, { recursive: true });
 mkdirSync(apiOut, { recursive: true });
 
+const viteEnv = {
+  ...process.env,
+  VITE_BASE_PATH: "/kruispad/",
+  VITE_SUPABASE_URL:
+    process.env.VITE_SUPABASE_URL ||
+    process.env.SUPABASE_URL__SHARED ||
+    process.env.SUPABASE_URL ||
+    "",
+  VITE_SUPABASE_ANON_KEY:
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY__SHARED ||
+    process.env.SUPABASE_ANON_KEY ||
+    "",
+};
+
 const build = spawnSync("pnpm", ["exec", "vite", "build"], {
   cwd: root,
   stdio: "inherit",
-  env: { ...process.env, VITE_BASE_PATH: "/kruispad/" },
+  env: viteEnv,
   shell: process.platform === "win32",
 });
 if (build.status !== 0) {
@@ -48,7 +65,12 @@ await esbuild.build({
   platform: "node",
   target: "node20",
   format: "esm",
-  packages: "external",
+  // Bundle deps so GekkoFlow host does not need resend/sendgrid versions matched.
+  packages: "bundle",
+  banner: {
+    // Vercel Node ESM interop for CJS-ish packages when needed
+    js: "",
+  },
   sourcemap: false,
   logLevel: "info",
 });

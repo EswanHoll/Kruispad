@@ -18,19 +18,27 @@ export function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      const redirectTo = `${window.location.origin}${from === "/login" ? "/" : from}`;
+      const basename = "/kruispad";
+      const path = from === "/login" ? "/" : from;
+      const redirectTo = `${window.location.origin}${basename}${path === "/" ? "/" : path}`;
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
           emailRedirectTo: redirectTo,
-          shouldCreateUser: true,
+          // Invite-only: Auth users must already exist (operator invite).
+          shouldCreateUser: false,
         },
       });
       if (error) throw error;
       setSent(true);
       toast.success("Magic link sent — check your email");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not send magic link");
+      const message = err instanceof Error ? err.message : "Could not send magic link";
+      toast.error(
+        /signups not allowed|user not found|unable to validate/i.test(message)
+          ? "No invite for this email. Ask an admin to invite you first."
+          : message,
+      );
     } finally {
       setBusy(false);
     }
@@ -44,8 +52,8 @@ export function LoginPage() {
           Payment Request Approval Workflow
         </p>
         <p style={{ color: "var(--kp-teal)" }}>
-          Initiators sign in with a <strong>magic link</strong> — no password. Approvers and Finance
-          usually act from email action buttons without signing in.
+          Initiators sign in with a <strong>magic link</strong> — invite-only, no password.
+          Approvers and Finance usually act from email action buttons without signing in.
         </p>
         {!configured && (
           <p style={{ color: "var(--kp-danger)", fontWeight: 600 }}>

@@ -23,9 +23,9 @@ Digitise Kruispad expense submission, **parallel dual approval** (Fred Louw + An
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `base` / `basename` = `/kruispad` |
 | Auth / DB / Storage | **Existing shared Supabase** | Schema **`kruispad`** only — no new Supabase project ([ADR-0003](adr/0003-email-action-links-and-shared-schema.md)) |
 | State machine | `kruispad` RPCs (`SECURITY DEFINER`) + `audit_events` | Concurrent dual approval under row lock |
-| Email actions | Resend + `/kruispad/action/:token` | Free tier ~3k/mo; single-use tokens; no HTML forms in email |
-| Auth UX | Magic link for initiators | Approvers/finance/admin act via email links |
-| Secrets | Bitwarden (`bws`) | `SUPABASE_*__SHARED` + `RESEND_*__PROJ_KRUISPAD` + `APP_BASE_URL__PROJ_KRUISPAD` |
+| Email actions | SendGrid + `/kruispad/action/:token` | Reuse `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL`; single-use tokens; no HTML forms in email |
+| Auth UX | Magic link (`shouldCreateUser: false`) | Invite-only profiles; approvers/finance/admin act via email links |
+| Secrets | Bitwarden (`bws`) | `SUPABASE_*__SHARED` + existing SendGrid names + `APP_BASE_URL__PROJ_KRUISPAD` + notify secret |
 
 Decision records: [ADR-0001](adr/0001-stack-and-host.md), [ADR-0002](adr/0002-parallel-approval-state-machine.md), [ADR-0003](adr/0003-email-action-links-and-shared-schema.md). Mount: [GEKKOFLOW_HOSTING.md](GEKKOFLOW_HOSTING.md).
 
@@ -41,7 +41,7 @@ C4Context
     Person(admin, "Elsje / Admin", "Print queue + user admin")
     System(app, "Kruispad Workflow", "SPA + API mounted on GekkoFlow Vercel")
     System_Ext(supabase, "Shared Supabase", "Auth, Postgres schema kruispad, Storage")
-    System_Ext(resend, "Resend", "Transactional email (free tier)")
+    System_Ext(sendgrid, "SendGrid", "Existing org transactional email")
     System_Ext(gekkoflow, "GekkoFlow", "Host Vercel project + Finance hub link")
     Rel(initiator, app, "Uses")
     Rel(fred, app, "Approves / declines")
@@ -49,7 +49,7 @@ C4Context
     Rel(finance, app, "Pays / declines")
     Rel(admin, app, "Prints / manages")
     Rel(app, supabase, "Auth, RLS data, files")
-    Rel(app, resend, "Notifications §2.7")
+    Rel(app, sendgrid, "Notifications §2.7")
     Rel(gekkoflow, app, "Serves /kruispad + hub link")
 ```
 
@@ -60,7 +60,7 @@ flowchart LR
   Browser["Browser SPA\n/kruispad/"] --> GekkoVercel["GekkoFlow Vercel\nstatic + /api/kruispad/*"]
   GekkoVercel --> SB[(Shared Supabase\nkruispad schema)]
   GekkoVercel -->|"bws at runtime"| BWS["Bitwarden SM\nGekkoStack project"]
-  GekkoVercel --> RS[Resend]
+  GekkoVercel --> SG[SendGrid]
   Hub["GekkoFlow Finance hub"] -->|"full-page /kruispad/"| Browser
 ```
 
@@ -96,7 +96,7 @@ Do not couple Kruispad schema tables into GekkoFlow-DB ORM. Data plane stays `kr
 sequenceDiagram
   participant App as GekkoFlow-hosted app
   participant API as /api/kruispad/notify
-  participant Mail as Resend
+  participant Mail as SendGrid
   participant User as Approver/Finance
   participant Act as /kruispad/action/:token
   participant DB as kruispad RPCs

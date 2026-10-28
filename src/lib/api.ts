@@ -35,6 +35,19 @@ export async function setUserRole(userId: string, role: Profile["role"]): Promis
   return data as Profile;
 }
 
+export async function inviteUser(
+  email: string,
+  fullName: string,
+  role: Profile["role"],
+): Promise<void> {
+  const { error } = await supabase.rpc("admin_invite_user", {
+    p_email: email,
+    p_full_name: fullName,
+    p_role: role,
+  });
+  if (error) throw error;
+}
+
 export async function createRequest(input: PaymentRequestInput): Promise<PaymentRequest> {
   const { data, error } = await supabase.rpc("create_payment_request", {
     p_date_requested: input.date_requested,
@@ -180,9 +193,17 @@ export async function transition(
   if (error) throw error;
 
   // Fire-and-forget notification; failures must not roll back the transition.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  const notifyHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (accessToken) {
+    notifyHeaders.Authorization = `Bearer ${accessToken}`;
+  }
   void fetch(API.notify, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: notifyHeaders,
     body: JSON.stringify({ requestId, action }),
   }).catch(() => undefined);
 

@@ -1,11 +1,17 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 import {
   actionButtonLabel,
   buildActionUrl,
   type EmailAction,
 } from "../src/lib/emailActions";
-import { appBaseUrl, createAdminClient, env, type AdminClient } from "./_supabaseAdmin";
+import {
+  appBaseUrl,
+  assertNotifyAuthorized,
+  createAdminClient,
+  env,
+  type AdminClient,
+} from "./_supabaseAdmin";
 
 type NotifyBody = {
   requestId?: string;
@@ -101,6 +107,13 @@ function htmlEmail(opts: {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
+    return;
+  }
+
+  try {
+    await assertNotifyAuthorized(req);
+  } catch {
+    res.status(401).json({ error: "unauthorized" });
     return;
   }
 
@@ -293,33 +306,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const resendKey = env("RESEND_API_KEY__PROJ_KRUISPAD", "RESEND_API_KEY");
-  const from = env("RESEND_FROM__PROJ_KRUISPAD", "RESEND_FROM");
+  // Reuse GekkoFlow / BWS SendGrid names — no new API key.
+  const sendgridKey = env("SENDGRID_API_KEY", "SENDGRID_API_KEY__ORG");
+  const from =
+    env("SENDGRID_FROM_EMAIL", "SENDGRID_FROM__PROJ_KRUISPAD", "SENDGRID_FROM") ??
+    "noreply@gekkoflow.com";
 
-  if (!resendKey || !from) {
+  if (!sendgridKey) {
     res.status(202).json({
       ok: true,
       emailed: 0,
       prepared: messages.length,
-      skipped: "resend_not_configured",
+      skipped: "sendgrid_not_configured",
     });
     return;
   }
 
-  const resend = new Resend(resendKey);
+  sgMail.setApiKey(sendgridKey);
   let emailed = 0;
   for (const msg of messages) {
     const recipients = [...new Set(msg.to.filter(Boolean))];
     if (recipients.length === 0) continue;
-    const { error } = await resend.emails.send({
-      from,
-      to: recipients,
-      subject: msg.subject,
-      text: msg.text,
-      html: msg.html,
-    });
-    if (error) {
-      res.status(502).json({ error: "resend_send_failed", detail: error.message });
+    try {
+      await sgMail.send({
+        to: recipients,
+        from,
+        subject: msg.subject,
+        text: msg.text,
+        html: msg.html,
+      });
+    } catch (err: unknown) {
+      const detail = err instanceof Error ? err.message : "send_failed";
+      res.status(502).json({ error: "sendgrid_send_failed", detail });
       return;
     }
     emailed += recipients.length;

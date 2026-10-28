@@ -28,17 +28,23 @@
 
 Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard → Settings → API → Exposed schemas).
 
+## Email — existing SendGrid (reuse; do not mint a new key)
+
+| # | Secret name (exact) | Scope | Required for | Notes |
+|---|---------------------|-------|--------------|-------|
+| 6 | `SENDGRID_API_KEY` | ORG / host | Email notify | **Same name as GekkoFlow Vercel / BWS** |
+| 7 | `SENDGRID_FROM_EMAIL` | ORG / host | Email notify | Configurable sender. Prefer **`noreply@gekkoflow.com`** (verified). Also verified: `notifications@gekkotech.co.za`, `webleads@gekkotech.co.za`. Authenticated domains include `gekkoflow.com`, `gekkotech.co.za`. |
+
 ## Kruispad-only (`__PROJ_KRUISPAD`)
 
 | # | Secret name (exact) | Scope | Required for | Notes |
 |---|---------------------|-------|--------------|-------|
-| 6 | `RESEND_API_KEY__PROJ_KRUISPAD` | PROJ | Email notify | Resend free tier (~3,000/mo) |
-| 7 | `RESEND_FROM__PROJ_KRUISPAD` | PROJ | Email notify | Verified from-address in Resend |
 | 8 | `APP_BASE_URL__PROJ_KRUISPAD` | PROJ | Email + magic-link redirects | Production mount, e.g. `https://gekkoflow.com/kruispad` |
-| 9 | `VITE_SUPABASE_URL` | host sync | Frontend build | Synced from `SUPABASE_URL__SHARED` into GekkoFlow / mount build |
-| 10 | `VITE_SUPABASE_ANON_KEY` | host sync | Frontend build | Synced from `SUPABASE_ANON_KEY__SHARED` |
+| 9 | `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD` | PROJ | POST `/api/kruispad/notify` | Shared secret for server→notify; browser uses Bearer JWT |
+| 10 | `VITE_SUPABASE_URL` | host sync | Frontend build | Synced from `SUPABASE_URL__SHARED` into GekkoFlow / mount build |
+| 11 | `VITE_SUPABASE_ANON_KEY` | host sync | Frontend build | Synced from `SUPABASE_ANON_KEY__SHARED` |
 
-**Removed:** `VERCEL_PROJECT_ID__PROJ_KRUISPAD` — Kruispad does not own a Vercel project.
+**Removed:** `VERCEL_PROJECT_ID__PROJ_KRUISPAD`, `RESEND_API_KEY__PROJ_KRUISPAD`, `RESEND_FROM__PROJ_KRUISPAD`.
 
 ## Presence checklist
 
@@ -49,9 +55,10 @@ Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard �
 | `SUPABASE_SERVICE_ROLE_KEY__SHARED` | |
 | `SUPABASE_PROJECT_REF__SHARED` | |
 | `SUPABASE_DB_PASSWORD__SHARED` | |
-| `RESEND_API_KEY__PROJ_KRUISPAD` | |
-| `RESEND_FROM__PROJ_KRUISPAD` | |
+| `SENDGRID_API_KEY` | |
+| `SENDGRID_FROM_EMAIL` | |
 | `APP_BASE_URL__PROJ_KRUISPAD` | |
+| `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD` | |
 
 ## Status log
 
@@ -59,7 +66,7 @@ Owner step: expose PostgREST schema **`kruispad`** on this project (Dashboard �
 |------|-----|------|
 | 2026-10-27 | Cursor agent | Inventory drafted |
 | 2026-10-27 | Cursor agent | Cost decision: shared Supabase + `kruispad` schema |
-| 2026-10-27 | Cursor agent | Email provider: **Resend** (SendGrid free tier gone) |
-| 2026-10-28 | Cursor agent | Host: GekkoFlow Vercel only; drop `VERCEL_PROJECT_ID__PROJ_KRUISPAD` |
-| | | Operator exposes schema + saves Resend/app URL rows on GekkoFlow Vercel via BWS |
-| | | Presence PASS — production mount unblocked |
+| 2026-10-27 | Cursor agent | Email provider briefly Resend |
+| 2026-10-28 | Cursor agent | Host: GekkoFlow Vercel only |
+| 2026-10-28 | Eswan / agent | Email: **existing SendGrid** (`SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL`); drop Resend |
+| | | Operator ensures `SENDGRID_FROM_EMAIL=noreply@gekkoflow.com` (or other verified) on GekkoFlow Vercel |
