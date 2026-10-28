@@ -65,12 +65,8 @@ await esbuild.build({
   platform: "node",
   target: "node20",
   format: "esm",
-  // Bundle deps so GekkoFlow host does not need resend/sendgrid versions matched.
-  packages: "bundle",
-  banner: {
-    // Vercel Node ESM interop for CJS-ish packages when needed
-    js: "",
-  },
+  // Externalize deps — GekkoFlow already has @sendgrid/mail + @supabase/supabase-js.
+  packages: "external",
   sourcemap: false,
   logLevel: "info",
 });
