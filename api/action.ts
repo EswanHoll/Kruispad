@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { actionRequiresReason, isEmailAction } from "../src/lib/emailActions";
-import { apiOrigin, createAdminClient } from "./_supabaseAdmin";
+import { apiOrigin, createAdminClient, env } from "./_supabaseAdmin";
 
 /**
  * GET  ?token=… → peek token + request summary (no login)
@@ -122,9 +122,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? peekRow.action
         : peekRow.action;
 
+    const notifyHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const notifySecret = env("KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD", "KRUISPAD_NOTIFY_SECRET");
+    if (notifySecret) {
+      notifyHeaders["x-kruispad-notify-secret"] = notifySecret;
+    }
     void fetch(`${apiOrigin()}/api/kruispad/notify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: notifyHeaders,
       body: JSON.stringify({ requestId: result.id, action: notifyAction }),
     }).catch(() => undefined);
 

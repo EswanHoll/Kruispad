@@ -33,7 +33,7 @@ Writes `mount/`:
 1. **Rewrites** (before SPA catch-all): `/kruispad` and `/kruispad/*` → `/kruispad/index.html`. Serverless files under `api/kruispad/` win over the GekkoFlow `/api` catch-all via filesystem routing.
 2. **Build:** `scripts/mount-kruispad.mjs` copies from `KRUISPAD_MOUNT` (or sibling `../Kruispad/mount`) into `dist/public/kruispad` and `api/kruispad`.
 3. **Hub:** Finance L2 item **Kruispad** → full-page navigation to `/kruispad/` (not wouter in-app routing).
-4. **Env on GekkoFlow Vercel:** hydrate from BWS — `SUPABASE_*__SHARED`, `RESEND_*__PROJ_KRUISPAD`, `APP_BASE_URL__PROJ_KRUISPAD`, plus `VITE_SUPABASE_*` synced from shared for the Kruispad SPA build.
+4. **Env on GekkoFlow Vercel:** hydrate from BWS — `SUPABASE_*__SHARED`, existing `SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL` (prefer `noreply@gekkoflow.com`), `APP_BASE_URL__PROJ_KRUISPAD`, `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD`, plus `VITE_SUPABASE_*` synced from shared for the Kruispad SPA build.
 
 ## Local Kruispad-only
 

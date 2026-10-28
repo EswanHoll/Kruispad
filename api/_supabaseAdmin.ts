@@ -1,3 +1,4 @@
+import type { VercelRequest } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
 export function env(name: string, ...aliases: string[]): string | undefined {
@@ -39,4 +40,37 @@ export function apiOrigin(): string {
   } catch {
     return "http://localhost:5173";
   }
+}
+
+function headerValue(req: VercelRequest, name: string): string | undefined {
+  const raw = req.headers[name] ?? req.headers[name.toLowerCase()];
+  if (Array.isArray(raw)) return raw[0];
+  return typeof raw === "string" ? raw : undefined;
+}
+
+/**
+ * Authorize POST /api/kruispad/notify:
+ * 1) shared secret `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD` via header, or
+ * 2) valid Supabase user JWT (Bearer).
+ */
+export async function assertNotifyAuthorized(req: VercelRequest): Promise<void> {
+  const expected = env("KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD", "KRUISPAD_NOTIFY_SECRET");
+  const provided =
+    headerValue(req, "x-kruispad-notify-secret") ??
+    headerValue(req, "x-kruispad-notify-key");
+  if (expected && provided && provided === expected) {
+    return;
+  }
+
+  const auth = headerValue(req, "authorization");
+  if (auth?.toLowerCase().startsWith("bearer ")) {
+    const token = auth.slice(7).trim();
+    if (token) {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error && data.user) return;
+    }
+  }
+
+  throw new Error("unauthorized");
 }

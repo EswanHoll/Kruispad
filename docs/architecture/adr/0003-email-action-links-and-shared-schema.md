@@ -1,28 +1,23 @@
-# ADR-0003 — Email action links + `kruispad` schema on shared Supabase
+# ADR-0003 — Email action links and shared schema
 
-**Status:** Accepted · **Date:** 2026-10-27 · **Deciders:** Eswan Holl (owner)  
-**Amends:** [ADR-0001](0001-stack-and-host.md) · **Implements:** Spec §2.7 with reduced login friction
+**Status:** Accepted · **Date:** 2026-10-27 · **Updated:** 2026-10-28 · **Deciders:** Eswan Holl (owner)  
+**Linear:** [GST-459](https://linear.app/gekkotech/issue/GST-459/kruispad-payment-request-workflow-app-v1)
 
 ## Context
 
-Users (especially Fred, Anton, Finance, Admin) should rarely need a password session to act. Approvers open an email and approve/decline from a single-purpose page. Separately, cost pressure forbids a dedicated Supabase project for Kruispad.
+Approvers and Finance need low-friction action without full login. Spec §2.7 notifications must not embed HTML forms. A dedicated Supabase project would add cost; shared GekkoFlow Supabase already exists.
 
 ## Decision
 
-1. **Schema:** All Kruispad tables, enums, and RPCs live in Postgres schema **`kruispad`** inside the **existing shared Supabase project** (GekkoDB / portfolio Supabase). Do **not** create a new Supabase project for Kruispad.
-2. **Email action links:** Notification emails contain **links** (not HTML forms) to `/action/:token`. Tokens are:
-   - opaque high-entropy secrets (32 bytes hex)
-   - stored only as SHA-256 hashes in `kruispad.action_tokens`
-   - bound to **recipient + request + action**
-   - **single-use** (`used_at`) and **expiring** (default 168h)
-3. **No-login page:** Shows request summary + attachment signed links. Approve / Mark Paid / Mark Printed confirm in one click. Decline collects a reason, then submits.
-4. **Same RPCs:** `kruispad.execute_email_action` validates the token then calls the same `apply_*` transition helpers used by session wrappers; audit `payload.channel = 'email_link'`.
-5. **Initiators:** Magic-link sign-in (Supabase Auth OTP / email link) — no password required to submit.
-6. **Secrets:** Reuse shared Supabase catalog names (`SUPABASE_*__SHARED`); keep Kruispad-only Resend/app URL under `__PROJ_KRUISPAD` (`RESEND_API_KEY__PROJ_KRUISPAD`, `RESEND_FROM__PROJ_KRUISPAD`). See SECRETS_INVENTORY. SendGrid is not used (no free tier).
+1. **Shared Supabase:** reuse the existing shared project; isolate Kruispad in schema **`kruispad`** (PostgREST-exposed).
+2. **Email action links:** Notification emails contain **links** (not HTML forms) to `/kruispad/action/:token`. Tokens are opaque, single-use, expiring; hashes stored in `kruispad.action_tokens`; execute via SECURITY DEFINER RPC with `audit_events.payload.channel = email_link`.
+3. **Magic-link auth:** Initiators sign in with Supabase Auth magic link using **`shouldCreateUser: false`** (invite-only). Profile rows are created only when a pending `kruispad.invites` row matches the new Auth user email.
+4. **Email provider:** **Existing SendGrid** already on GekkoFlow / BWS — env names **`SENDGRID_API_KEY`** and **`SENDGRID_FROM_EMAIL`**. Do not create a new SendGrid key. Preferred verified sender: **`noreply@gekkoflow.com`** (also verified: `notifications@gekkotech.co.za`, `webleads@gekkotech.co.za`). Authenticated domains include `gekkoflow.com` and `gekkotech.co.za`.
+5. **Resend:** not used (owner decision 28 Oct 2026 — use existing SendGrid).
+6. **Secrets:** Reuse shared Supabase catalog names (`SUPABASE_*__SHARED`); reuse SendGrid host names; keep `APP_BASE_URL__PROJ_KRUISPAD` and `KRUISPAD_NOTIFY_SECRET__PROJ_KRUISPAD`. See SECRETS_INVENTORY.
 
 ## Consequences
 
-- (+) Lower friction for parallel approvers; one less billable Supabase project.
-- (+) Audit trail still authoritative; channel distinguished in payload.
-- (−) Owner must expose schema `kruispad` on the shared project's PostgREST API settings.
-- (−) Schema cohabitation requires careful RLS and naming so Kruispad never reads other products' tables.
+- (+) No extra email vendor or Supabase bill.
+- (−) Owner must keep `SENDGRID_FROM_EMAIL` on a verified sender and expose schema `kruispad`.
+- (−) Invite + Auth user provisioning is an operator step before first magic link.
