@@ -3,7 +3,11 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
+/** Mounted under GekkoFlow at /kruispad/ (ADR-0001). Local override: VITE_BASE_PATH=/ */
+const base = process.env.VITE_BASE_PATH ?? "/kruispad/";
+
 export default defineConfig({
+  base,
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

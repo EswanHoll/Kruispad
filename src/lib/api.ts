@@ -1,3 +1,4 @@
+import { API } from "./paths";
 import { supabase } from "./supabase";
 import type {
   AuditEvent,
@@ -179,7 +180,7 @@ export async function transition(
   if (error) throw error;
 
   // Fire-and-forget notification; failures must not roll back the transition.
-  void fetch("/api/notify", {
+  void fetch(API.notify, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requestId, action }),

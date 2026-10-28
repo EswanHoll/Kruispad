@@ -21,8 +21,8 @@ describe("email action tokens", () => {
   });
 
   it("builds action URLs without embedding forms", () => {
-    const url = buildActionUrl("https://kruispad.example", "abc123");
-    expect(url).toBe("https://kruispad.example/action/abc123");
+    const url = buildActionUrl("https://gekkoflow.com/kruispad", "abc123");
+    expect(url).toBe("https://gekkoflow.com/kruispad/action/abc123");
     expect(url.includes("<form")).toBe(false);
   });
 

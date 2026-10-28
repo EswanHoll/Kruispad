@@ -12,13 +12,13 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepare:gekkoflow-mount": "node scripts/prepare-gekkoflow-mount.mjs",
     "db:push": "supabase db push",
     "db:start": "supabase start",
     "db:stop": "supabase stop"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "resend": "^6.1.2",
     "@tanstack/react-query": "^5.90.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -26,6 +26,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-router-dom": "^7.9.4",
+    "resend": "^6.1.2",
     "sonner": "^2.0.7",
     "zod": "^4.1.12"
   },
@@ -37,6 +38,7 @@
     "@types/react-dom": "^19.2.1",
     "@vercel/node": "^5.3.24",
     "@vitejs/plugin-react": "^5.0.4",
+    "esbuild": "^0.28.2",
     "eslint": "^9.37.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.23",

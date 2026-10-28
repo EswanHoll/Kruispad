@@ -18,7 +18,7 @@ Challenge in the work product. This stance does **not** override HARD RULEs.
 
 ## HARD RULE — no sandbox product builds ([ADR-0015](https://github.com/EswanHoll/GekkoStack/blob/main/docs/portfolio-architecture/decisions/ADR-0015-no-sandbox-product-builds.md))
 
-**Never build a product in a sandbox** (Grok Build / live preview, Cursor Cloud throwaway VM, Manus preview) unless the operator has explicitly approved that job. Implement in **this product repo**, merge to **`main`**, deploy that `main` to the stack named in `docs/architecture/` (Vercel + Supabase). Portfolio: GekkoStack ADR-0015.
+**Never build a product in a sandbox** (Grok Build / live preview, Cursor Cloud throwaway VM, Manus preview) unless the operator has explicitly approved that job. Implement in **this product repo**, merge to **`main`**, mount into the **existing GekkoFlow Vercel project** + shared Supabase (`kruispad` schema) per `docs/architecture/`. Portfolio: GekkoStack ADR-0015.
 
 ## LOCKED — operator protocol
 
@@ -55,10 +55,10 @@ Tracking issue for v1: [GST-459](https://linear.app/gekkotech/issue/GST-459/krui
 ## Product
 
 - **Spec (source of truth for workflow behaviour):** [`WorkflowApp/Payment_Request_Approval_Workflow_Spec.md`](WorkflowApp/Payment_Request_Approval_Workflow_Spec.md) v1.3; design index: [`docs/designs/`](docs/designs/).
-- **Stack / host (overrides spec §2.1):** React + Vite + TypeScript + Tailwind on **Vercel**; **shared Supabase** with schema **`kruispad`** (no new Supabase project). See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md), [ADR-0001](docs/architecture/adr/0001-stack-and-host.md), [ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md).
+- **Stack / host (overrides spec §2.1):** React + Vite + TypeScript + Tailwind **mounted on the existing GekkoFlow Vercel project** at `/kruispad/` (APIs `/api/kruispad/*`); **shared Supabase** schema **`kruispad`**. Do **not** create a Kruispad Vercel or Supabase project. See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md), [ADR-0001](docs/architecture/adr/0001-stack-and-host.md), [GEKKOFLOW_HOSTING.md](docs/architecture/GEKKOFLOW_HOSTING.md), [ADR-0003](docs/architecture/adr/0003-email-action-links-and-shared-schema.md).
 - **Auth UX:** Magic-link for initiators; email action links (single-use tokens) for approvers/finance/admin — no HTML forms in email.
-- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED`; Kruispad-only Resend/app URL under `__PROJ_KRUISPAD`. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
-- **Hub:** Keep auth and deep links compatible with a [GekkoFlow](https://gekkoflow.com) hub; see architecture § GekkoFlow linking.
+- **Secrets:** Bitwarden only; reuse `SUPABASE_*__SHARED`; keep `RESEND_*__PROJ_KRUISPAD` and `APP_BASE_URL__PROJ_KRUISPAD`. Inventory: [`docs/architecture/SECRETS_INVENTORY.md`](docs/architecture/SECRETS_INVENTORY.md). **Never print secret values. Never GitHub secrets. Never a new BWS project.**
+- **Hub:** GekkoFlow hosts and links this app (Finance → `/kruispad/`); see architecture § GekkoFlow linking.
 
 ## Documentation
 

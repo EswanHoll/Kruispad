@@ -28,6 +28,15 @@ export function createAdminClient() {
 export function appBaseUrl(): string {
   return (
     env("APP_BASE_URL__PROJ_KRUISPAD", "APP_BASE_URL", "VITE_APP_BASE_URL") ??
-    "http://localhost:5173"
+    "http://localhost:5173/kruispad"
   );
+}
+
+/** Host origin for /api/kruispad/* (APP_BASE_URL includes the /kruispad mount path). */
+export function apiOrigin(): string {
+  try {
+    return new URL(appBaseUrl()).origin;
+  } catch {
+    return "http://localhost:5173";
+  }
 }

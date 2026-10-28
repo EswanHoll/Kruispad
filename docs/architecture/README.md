@@ -3,6 +3,7 @@
 | Doc | Purpose |
 |-----|---------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System map: stack, host, context, GekkoFlow hub linking |
+| [GEKKOFLOW_HOSTING.md](GEKKOFLOW_HOSTING.md) | Mount contract: `/kruispad/` on GekkoFlow Vercel |
 | [SECRETS_INVENTORY.md](SECRETS_INVENTORY.md) | Secret **names** only (Bitwarden / ADR-0017) |
 | [adr/](adr/) | Product ADRs |
 | [diagrams/](diagrams/) | Mermaid extracts (optional; context also embedded in ARCHITECTURE.md) |

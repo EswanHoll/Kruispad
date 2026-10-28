@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { actionButtonLabel, actionRequiresReason, isEmailAction } from "@/lib/emailActions";
 import { formatZar } from "@/lib/format";
+import { API } from "@/lib/paths";
 import { PAYMENT_TYPE_LABELS, type PaymentType } from "@/lib/types";
 
 type Preview = {
@@ -33,7 +34,7 @@ export function ActionPage() {
 
   useEffect(() => {
     if (!token) return;
-    void fetch(`/api/action?token=${encodeURIComponent(token)}`)
+    void fetch(`${API.action}?token=${encodeURIComponent(token)}`)
       .then(async (res) => {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error ?? "Invalid link");
@@ -51,7 +52,7 @@ export function ActionPage() {
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/action", {
+      const res = await fetch(API.action, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, reason: reason.trim() || undefined }),

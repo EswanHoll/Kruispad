@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { actionRequiresReason, isEmailAction } from "../src/lib/emailActions";
-import { createAdminClient } from "./_supabaseAdmin";
+import { apiOrigin, createAdminClient } from "./_supabaseAdmin";
 
 /**
  * GET  ?token=… → peek token + request summary (no login)
@@ -122,10 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? peekRow.action
         : peekRow.action;
 
-    const base =
-      process.env.APP_BASE_URL__PROJ_KRUISPAD ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
-    void fetch(`${base.replace(/\/$/, "")}/api/notify`, {
+    void fetch(`${apiOrigin()}/api/kruispad/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId: result.id, action: notifyAction }),

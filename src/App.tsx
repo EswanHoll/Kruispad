@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/auth/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { RequireAuth } from "@/components/RequireAuth";
+import { APP_BASENAME } from "@/lib/paths";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ActionPage } from "@/pages/ActionPage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -20,7 +21,7 @@ import { UsersPage } from "@/pages/UsersPage";
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={APP_BASENAME}>
         <Toaster richColors position="top-right" />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
