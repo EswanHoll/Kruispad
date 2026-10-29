@@ -334,6 +334,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         subject: msg.subject,
         text: msg.text,
         html: msg.html,
+        // Action links are single-use tokens: never route them through click tracking.
+        trackingSettings: { clickTracking: { enable: false, enableText: false } },
       });
     } catch (err: unknown) {
       const detail = err instanceof Error ? err.message : "send_failed";
